@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: 3-tier-app-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: 3-tier-app
+  template:
+    metadata:
+      labels:
+        app: 3-tier-app
+    spec:
+      containers:
+      - name: 3-tier-app-container
+        image: arunhn/3_tier_app:latest
+        ports:
+        - containerPort: 80
