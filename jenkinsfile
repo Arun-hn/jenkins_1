@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials-id') // Create a Jenkins credential with Docker Hub username and password
+        DOCKER_IMAGE_NAME = 'your-dockerhub-username/your-docker-image-name'
+        KUBE_CONFIG = credentials('kube-config-credentials-id') // Create a Jenkins credential with your Kubernetes kubeconfig file content
+        
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout code from GitHub
+                checkout scm
+            }
+        }
+
+        stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    // Build and push Docker image to Docker Hub
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials-id') {
+                        def customImage = docker.build(DOCKER_IMAGE_NAME)
+                        customImage.push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    // Apply Kubernetes manifests
+                    withCredentials([file(credentialsId: 'kube-config-credentials-id', variable: 'KUBE_CONFIG')]) {
+                        sh """
+                            kubectl --kubeconfig=\$KUBE_CONFIG apply -f deployment.yaml 
+                            kubectl --kubeconfig=\$KUBE_CONFIG apply -f service.yaml 
+"""
+                    }
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                script {
+                    // Add your testing steps here
+                    echo "Running tests..."
+                }
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                script {
+                    // Add any cleanup steps here
+                    echo "Performing cleanup..."
+                }
+            }
+        }
+    }
+}
